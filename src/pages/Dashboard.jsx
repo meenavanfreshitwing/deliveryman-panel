@@ -1,7 +1,6 @@
 // src/pages/Dashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
 import { deliveryBoyAPI } from '../api/deliveryBoy';
 import {
   Truck,
@@ -26,9 +25,12 @@ import {
 import { FaTruck, FaClipboardList, FaCheckCircle, FaClock, FaMapMarkerAlt, FaPhone, FaEnvelope, FaTimesCircle, FaHashtag, FaCalendarAlt, FaUser, FaCar, FaMoneyBillWave } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
+// deliveryDate is an IST calendar day 'YYYY-MM-DD'
+const formatDeliveryDate = (date) =>
+  new Date(`${date}T00:00:00Z`).toLocaleDateString('en-IN', { timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short' });
+
 const Dashboard = () => {
   const { deliveryBoy, logout } = useAuth();
-  const navigate = useNavigate();
   const [stats, setStats] = useState({
     todayDeliveries: 0,
     pendingOrders: 0,
@@ -392,6 +394,15 @@ const Dashboard = () => {
                   {formatDate(order.orderStatus === 'cancelled' ? (order.cancelledAt || order.updatedAt) : order.createdAt)}
                 </p>
               </div>
+              {order.deliveryDate && (
+                <div>
+                  <p className="text-[11px] sm:text-xs text-gray-500">Deliver On</p>
+                  <p className="font-semibold text-xs sm:text-sm text-green-700">
+                    {formatDeliveryDate(order.deliveryDate)}
+                    {order.deliverySlot?.label ? ` · ${order.deliverySlot.label}` : ''}
+                  </p>
+                </div>
+              )}
               <div>
                 <p className="text-[11px] sm:text-xs text-gray-500 mb-1">Order Status</p>
                 {getStatusBadge(order.deliveryStatus, order.orderStatus)}
@@ -599,7 +610,7 @@ const Dashboard = () => {
                 ? `Delivered: ${formatDate(order.deliveryDeliveredAt || order.deliveredAt)}`
                 : type === 'cancelled'
                 ? `Cancelled: ${formatDate(order.cancelledAt || order.updatedAt)}`
-                : `Placed: ${formatDate(order.createdAt)}`
+                : `Placed: ${formatDate(order.createdAt)}${order.deliveryDate ? ` · Deliver: ${formatDeliveryDate(order.deliveryDate)}` : ''}`
               }
             </p>
           </div>
